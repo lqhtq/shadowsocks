@@ -13,7 +13,7 @@ Features:
 - TCP Fast Open
 - Workers and graceful restart
 - Destination IP blacklist
-- Linux pluggable congestion control algorithms
+- Linux pluggable congestion control algorithms support  
 Server
 ------
 

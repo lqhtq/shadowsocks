@@ -25,7 +25,7 @@ import struct
 import logging
 import traceback
 import random
-
+import sys
 from shadowsocks import encrypt, eventloop, shell, common
 from shadowsocks.common import parse_header
 
@@ -122,7 +122,10 @@ class TCPRelayHandler(object):
             self._chosen_server = self._get_a_server()
         fd_to_handlers[local_sock.fileno()] = self
         local_sock.setblocking(False)
-        local_sock.setsockopt(socket.SOL_TCP, socket.TCP_NODELAY, 1)
+        if sys.platform.startswith('linux') and 'cc_algo' in config:
+	    TCP_CONGESTION = getattr(socket, 'TCP_CONGESTION', 13)
+	    local_sock.setsockopt(socket.IPPROTO_TCP, TCP_CONGESTION, config['cc_algo'])
+	local_sock.setsockopt(socket.SOL_TCP, socket.TCP_NODELAY, 1)
         loop.add(local_sock, eventloop.POLL_IN | eventloop.POLL_ERR,
                  self._server)
         self.last_activity = 0

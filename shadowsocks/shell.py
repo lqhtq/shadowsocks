@@ -117,11 +117,14 @@ def check_config(config, is_local):
         logging.error('DON\'T USE DEFAULT PASSWORD! Please change it in your '
                       'config.json!')
         sys.exit(1)
+    if 'cc_algo' in config and not sys.platform.startswith('linux'):
+	logging.warn('pluggable congestion control algorithm requires linux!')
     if config.get('user', None) is not None:
         if os.name != 'posix':
             logging.error('user can be used only on Unix')
             sys.exit(1)
-
+    if 'cc_algo' in config and sys.platform.startswith('linux'):
+	logging.info('use %s as socket congestion control algorithm' % config.get('cc_algo', None))
     encrypt.try_cipher(config['password'], config['method'])
 
 
@@ -136,7 +139,7 @@ def get_config(is_local):
                     'version']
     else:
         shortopts = 'hd:s:p:k:m:c:t:vq'
-        longopts = ['help', 'fast-open', 'pid-file=', 'log-file=', 'workers=',
+        longopts = ['help', 'fast-open', 'CC=', 'pid-file=', 'log-file=', 'workers=',
                     'forbidden-ip=', 'user=', 'manager-address=', 'version']
     try:
         config_path = find_config()
@@ -179,6 +182,8 @@ def get_config(is_local):
                 config['timeout'] = int(value)
             elif key == '--fast-open':
                 config['fast_open'] = True
+            elif key == '--CC':
+		config['cc_algo'] = value
             elif key == '--workers':
                 config['workers'] = int(value)
             elif key == '--manager-address':
@@ -320,6 +325,7 @@ Proxy options:
   --workers WORKERS      number of workers, available on Unix/Linux
   --forbidden-ip IPLIST  comma seperated IP list forbidden to connect
   --manager-address ADDR optional server manager UDP address, see wiki
+  --CC CC_ALGO_NAME        use specific pluggable congestion control algorithm for connections, requires Linux 2.6.13 or above 
 
 General options:
   -h, --help             show this help message and exit
